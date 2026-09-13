@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="de-DE">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <title>Maribel Demo 1</title>
+
+        <script src="../dist/maribel.js"></script>
+    </head>
+    <body>
+        <h1>Maribel Demo</h1>
+
+        <button onclick="showParagraph.value = ! showParagraph.value">Toggle Paragraph</button>
+        <div style="background-color: darkkhaki; border: 1px solid black; padding: 5px" id="p1">
+            Click the button above!
+        </div>
+
+        <form onsubmit="return false">
+            <div>
+                <input type="text" name="foo" />
+                <button onclick="foo.value = 'clicked'">Fill</button>
+            </div>
+            <div>
+                <input type="text" id="bar" />
+            </div>
+        </form>
+        <script>
+            window.addEventListener('DOMContentLoaded', () => {
+                const mar = Maribel.create();
+                const showParagraph = mar.react(true);
+                const foo = mar.bind('foo');
+
+                mar.on('state:changed', () => {
+                    showParagraph.value ? mar.dom.show('p1') : mar.dom.hide('p1');
+                    console.log(foo.value);
+                });
+
+                
+            });
+        </script>
+
+    </body>
+</html>
