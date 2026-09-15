@@ -1,4 +1,4 @@
-export function show(id:string): void {
+export function show(id: string): void {
     const obj = window.document.getElementById(id);
     if (obj === null) return;
     
@@ -21,4 +21,11 @@ export function hide(id: string): void {
 
     obj.setAttribute('mar-display', obj.style.display);
     obj.style.display = 'none';
+}
+
+export function replaceContent(id: string, content: string): void {
+    const obj = window.document.getElementById(id);
+    if (obj === null) return;
+
+    obj.innerHTML = content;
 }

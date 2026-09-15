@@ -12,7 +12,7 @@
         <h1>Maribel Demo</h1>
 
         <button onclick="showParagraph.value = ! showParagraph.value">Toggle Paragraph</button>
-        <div style="background-color: darkkhaki; border: 1px solid black; padding: 5px" id="p1">
+        <div style="background-color: darkkhaki; border: 1px solid black; padding: 5px;" id="p1">
             Click the button above!
         </div>
 
@@ -25,18 +25,31 @@
                 <input type="text" id="bar" />
             </div>
         </form>
-        <script>
-            window.addEventListener('DOMContentLoaded', () => {
-                const mar = Maribel.create();
-                const showParagraph = mar.react(true);
-                const foo = mar.bind('foo');
 
-                mar.on('state:changed', () => {
-                    showParagraph.value ? mar.dom.show('p1') : mar.dom.hide('p1');
-                    console.log(foo.value);
+        <div id="apiResult" @style="'background-color: ' + foo.value">
+            No api call yet: [[ foo.value ]], [[ 1+1 ]] and also [[ showParagraph.value ]]
+        </div>
+        <script>
+            const mar = Maribel.create();
+            const showParagraph = mar.statefulValue(true);
+            const foo = mar.bind('foo');
+
+            mar.on('ready', async () => {
+                const datastuff = mar.statefulObject({
+                    data: {}
                 });
 
-                
+                /*
+                datastuff.data = await (await mar.http.get('https://api.weather.gov/alerts'))
+                    .or((err) => {
+                        console.error('FEhler!!!',err);
+                    })
+                    .json() || {};
+                */
+            });
+
+            mar.on('state:changed', () => {
+                showParagraph.value ? mar.dom.show('p1') : mar.dom.hide('p1');
             });
         </script>
 

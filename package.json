@@ -1,6 +1,7 @@
 {
   "name": "maribel",
   "version": "1.0.0",
+  "types": "./maribel.d.ts",
   "description": "Very minimal tools to handle daily js-business.",
   "keywords": [
     "js",
@@ -12,7 +13,8 @@
   "type": "module",
   "main": "src/maribel.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch": "nodemon -i dist -e ts  build.mjs"
   },
   "devDependencies": {
     "esbuild": "0.28.2"
