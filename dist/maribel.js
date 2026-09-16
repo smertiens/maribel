@@ -132,7 +132,7 @@
     }
   };
 
-  // src/maribel.ts
+  // src/proxies.ts
   var _PrimitiveProxyWrapper = class {
     constructor(value, tp) {
       this.value = value;
@@ -186,6 +186,8 @@
       return target.value;
     }
   };
+
+  // src/maribel.ts
   var exprRegex = /\[\[\s*([^\]]+)\s*\]\]/mg;
   var renderInterval = 100;
   var Maribel = class _Maribel {
@@ -197,6 +199,7 @@
       this._pendingUpdate = false;
       this._rendering = false;
       this._renderInterval = null;
+      this._data = {};
       this._options = {
         root: "body",
         ...options
@@ -205,6 +208,13 @@
       window.addEventListener("DOMContentLoaded", () => {
         that._init();
       });
+    }
+    data(obj) {
+      this._data = obj;
+      return obj;
+    }
+    get d() {
+      return this._data;
     }
     static create(options) {
       return new _Maribel(options);
@@ -275,12 +285,16 @@
     }
     _render() {
       this._rendering = true;
+      const p = 1;
       for (const dynNode of this._renderable) {
         if (dynNode.template.length > 0) {
           dynNode.elem.textContent = dynNode.template.replaceAll(
             exprRegex,
             (str, grp1, offset) => {
-              return new Function(`return (${grp1.trim()});`)();
+              return new Function(
+                ...Object.keys(this._data),
+                `return (${grp1.trim()});`
+              )(...Object.values(this._data));
             }
           );
         }
@@ -288,7 +302,10 @@
           for (const dynAttrib of dynNode.attribs) {
             dynNode.elem.setAttribute(
               dynAttrib.attribName,
-              new Function(`return (${dynAttrib.expr});`)()
+              new Function(
+                ...Object.keys(this._data),
+                `return (${dynAttrib.expr});`
+              )(...Object.values(this._data))
             );
           }
         }

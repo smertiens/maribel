@@ -1,84 +1,8 @@
 import * as DOMFunctions from './dom.js';
 import { HTTPClient } from './http.js';
-
-class _PrimitiveProxyWrapper {
-    public value: any;
-    public originalType: string;
-
-    constructor(value: any, tp: string) {
-        this.value = value;
-        this.originalType = tp;
-    }
-}
-
-class _FormProxyWrapper {
-    public value: string;
-    public elem: HTMLElement;
-
-    constructor(value: string, elem: HTMLElement) {
-        this.value = value;
-        this.elem = elem;
-    }
-}
-
-class _FormProxyHandler implements ProxyHandler<_FormProxyWrapper> {
-    private _marInst;
-    private _elem: HTMLInputElement;
-
-    constructor(marInst: Maribel, elem: HTMLInputElement) {
-        this._marInst = marInst;
-        this._elem = elem;
-    }
-
-    set(obj: Object, prop: string|symbol, value: any, receiver: any): boolean {
-        Reflect.set(obj, prop, value);
-        this._elem.value = value;
-        this._marInst.updateState();
-        return true;
-    }
-};
-
-class _ObjectProxyHandler implements ProxyHandler<Object> {
-    private _marInst;
-
-    constructor(marInst: Maribel) {
-        this._marInst = marInst;
-    }
-
-    set(obj: Object, prop: string|symbol, value: any, receiver: any): boolean {
-        Reflect.set(obj, prop, value);
-        this._marInst.updateState();
-        return true;
-    }
-}
-
-class _PrimitiveProxyHandler implements ProxyHandler<Object> {
-    private _marInst;
-
-    constructor(marInst: Maribel) {
-        this._marInst = marInst;
-    }
-
-    set(obj: Object, prop: string|symbol, value: any, receiver: any): boolean {
-        if (prop !== 'value') {
-            throw Error('Reactive primitives can only be assigned using "value" ')
-        }
-
-        // @ts-ignore
-        obj.value = value;
-        this._marInst.updateState();
-        return true;
-    }
-
-    get(target: _PrimitiveProxyWrapper, prop: string, receiver: Object): any {
-        if (prop !== 'value') {
-            throw Error('Reactive primitives can only be read using "value" ')
-        }
-
-        return target.value;
-    }
-}
-
+import { _ObjectProxyHandler, _FormProxyHandler, _FormProxyWrapper, 
+    _PrimitiveProxyHandler, _PrimitiveProxyWrapper } from './proxies.js';
+    
 interface MaribelOptions {
     root: string
 }
@@ -107,6 +31,7 @@ export default class Maribel {
     private _pendingUpdate: boolean;
     private _rendering: boolean;
     private _renderInterval: number | null;
+    private _data: Record<string, any>;
     
     constructor(options?: MaribelOptions) {
         this._listeners = new Map();
@@ -116,6 +41,7 @@ export default class Maribel {
         this._pendingUpdate = false;
         this._rendering = false;
         this._renderInterval = null;
+        this._data = {};
 
         // Default options
         this._options = {
@@ -128,6 +54,15 @@ export default class Maribel {
         window.addEventListener('DOMContentLoaded', () => {
             that._init();
         });
+    }
+
+    public data(obj: Record<string, any>): Record<string, any> {
+        this._data = obj;
+        return obj;
+    }
+
+    get d(): Record<string, any> {
+        return this._data;
     }
 
     static create(options?: MaribelOptions) {
@@ -215,13 +150,16 @@ export default class Maribel {
 
     private _render() {
         this._rendering = true;
-
+        const p=1;
         for (const dynNode of this._renderable) {
             if (dynNode.template.length > 0) {
                 dynNode.elem.textContent = dynNode.template.replaceAll(
                     exprRegex, 
                     (str, grp1, offset) => {
-                        return new Function(`return (${grp1.trim()});`)();
+                        return new Function(
+                            ...Object.keys(this._data),
+                            `return (${grp1.trim()});`
+                        )(...Object.values(this._data));
                     })
                 ;
             }
@@ -230,7 +168,10 @@ export default class Maribel {
                 for (const dynAttrib of dynNode.attribs) {
                     dynNode.elem.setAttribute(
                         dynAttrib.attribName,
-                        new Function(`return (${dynAttrib.expr});`)()
+                        new Function(
+                            ...Object.keys(this._data),
+                            `return (${dynAttrib.expr});`
+                        )(...Object.values(this._data))
                     );
                 }
             }
